@@ -1,6 +1,6 @@
 #include <cuda_runtime.h> 
 #include <stdio.h>
-#include <sys/time.h>
+#include "time_utils.h"
 
 __global__ void warmup(float *c) {
     printf("warpSize: %d\n", warpSize);
@@ -35,8 +35,13 @@ __global__ void math_kernel2(float *c) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     float a = 0.0;
     float b = 0.0;
+    bool ipred = (tid % (2 * warpSize) == 0);
 
-    if ((tid / warpSize) % 2 == 0) {
+    
+    //if ((tid / warpSize) % 2 == 0) {
+    //    a = 100.0;
+    //}
+    if (ipred) {
         a = 100.0;
     }
     else {
@@ -61,15 +66,6 @@ __global__ void math_kernel3(float *c) {
     c[tid] = a + b;
 }
 
-double cpuSecond()
-{
-  struct timeval tp;
-  gettimeofday(&tp,NULL);
-  return((double)tp.tv_sec+(double)tp.tv_usec*1e-6);
-
-}
-
-
 int main(int argc, char* argv[]) {
     int dev = 0;
     cudaDeviceProp device_prop;
@@ -77,7 +73,7 @@ int main(int argc, char* argv[]) {
     printf("%s using Device %d: %s\n", argv[0], dev, device_prop.name);
 
     const int size = 64;
-    const int k_thread_num = 64;
+    const int k_thread_num = 256;
 
     dim3 block(k_thread_num, 1);
     printf("block.x: %d, block.y:%d\n", block.x, block.y);
@@ -91,18 +87,17 @@ int main(int argc, char* argv[]) {
 
     double i_start, i_elaps;
     cudaDeviceSynchronize();
-    i_start = cpuSecond();
+    i_start = CpuSecond();
     warmup<<<grid, 1>>> (d_c);
     cudaDeviceSynchronize();
-    i_elaps = cpuSecond() - i_start;
+    i_elaps = CpuSecond() - i_start;
 
     printf("warmup  <<<%d, %d>>> elapsed %lf sec \n", grid.x, block.x, i_elaps);
     
-    
-    i_start = cpuSecond();
+    i_start = CpuSecond();
     math_kernel1<<<grid, block>>> (d_c);
     cudaDeviceSynchronize();
-    i_elaps = cpuSecond() - i_start;
+    i_elaps = CpuSecond() - i_start;
 
     printf("kernel1  <<<%d, %d>>> elapsed %lf sec \n", grid.x, block.x, i_elaps);
 
@@ -113,17 +108,17 @@ int main(int argc, char* argv[]) {
     }
     printf("\n");
     */
-    i_start = cpuSecond();
+    i_start = CpuSecond();
     math_kernel2<<<grid, block>>> (d_c);
     cudaDeviceSynchronize();
-    i_elaps = cpuSecond() - i_start;
+    i_elaps = CpuSecond() - i_start;
 
     printf("kernel2  <<<%d, %d>>> elapsed %lf sec \n", grid.x, block.x, i_elaps);
 
-    i_start = cpuSecond();
+    i_start = CpuSecond();
     math_kernel3<<<grid, block>>> (d_c);
     cudaDeviceSynchronize();
-    i_elaps = cpuSecond() - i_start;
+    i_elaps = CpuSecond() - i_start;
 
     printf("kernel3  <<<%d, %d>>> elapsed %lf sec \n", grid.x, block.x, i_elaps);
 

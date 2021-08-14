@@ -7,9 +7,8 @@ __global__ void square_1(float *d_in, float *d_out) {
 }
 
 
-
 int main() {
-    const int ARRAY_SIZE = 8;
+    const int ARRAY_SIZE = 1024;
     const int ARRAY_BYTES = ARRAY_SIZE * sizeof(float);    
 
     // h前缀一般表示host， d前缀一般表示device
@@ -34,9 +33,9 @@ int main() {
     // 从Device拷贝到Host
     cudaMemcpy(h_out, d_out, ARRAY_BYTES, cudaMemcpyDeviceToHost);
 
-    for (int i = 0; i < ARRAY_SIZE; i++) {
-        printf("%f\n", h_out[i]);
-    }
+    //for (int i = 0; i < ARRAY_SIZE; i++) {
+    //    printf("%f\n", h_out[i]);
+    //}
     
     // 释放内存
     cudaFree(d_in);
